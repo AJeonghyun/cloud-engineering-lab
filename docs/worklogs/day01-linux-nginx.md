@@ -46,7 +46,7 @@ ID_LIKE=debian
 HOME_URL="https://www.ubuntu.com/"
 SUPPORT_URL="https://help.ubuntu.com/"
 BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
-PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
 ```
 
 `cat`은 파일 내용을 출력하는 명령이고, `/etc/os-release`는 현재 설치된 Linux 배포판의 정보를 담고 있는 파일이다.
@@ -250,3 +250,146 @@ Birth:  2026-08-24 16:25:57.038229390 +0900
 - `umask`는 새 파일과 디렉터리를 만들 때 제외할 권한을 결정한다.
 - `chmod`는 파일 내용을 변경하지 않고 파일의 권한을 변경한다.
 - 파일 내용이 바뀌면 `Modify` 시간이 변경되고, 권한과 같은 메타데이터가 바뀌면 `Change` 시간이 변경된다.
+
+## 패키지·프로세스·자원 관찰
+
+Ubuntu 서버에 설치된 패키지와 실행 중인 프로세스를 확인하고 CPU, 메모리, 디스크의 현재 상태를 관찰했다.
+
+### 설치된 패키지 확인
+
+설치된 패키지 중 일부를 다음 명령으로 확인했다.
+
+```bash
+apt list --installed 2>/dev/null | sed -n '1,10p'
+```
+
+출력에는 패키지 이름, 저장소, 설치 버전, CPU 아키텍처와 설치 상태가 표시되었다.
+
+- `noble`: Ubuntu 24.04의 코드명
+- `noble-updates`: Ubuntu 업데이트 저장소
+- `arm64`: ARM64 아키텍처용 패키지
+- `all`: CPU 아키텍처에 종속되지 않는 패키지
+- `installed,automatic`: 다른 패키지의 의존성으로 자동 설치된 상태
+
+### 실행 중인 프로세스 확인
+
+```bash
+ps -ef | sed -n '1,10p'
+```
+
+주요 출력은 다음과 같았다.
+
+```text
+UID          PID    PPID  C STIME TTY          TIME CMD
+root           1       0  0 15:11 ?        00:00:01 /sbin/init
+root           2       0  0 15:11 ?        00:00:00 [kthreadd]
+```
+
+- `UID`: 프로세스를 실행한 사용자
+- `PID`: 프로세스의 고유 번호
+- `PPID`: 부모 프로세스의 PID
+- `TIME`: 프로세스가 사용한 누적 CPU 시간
+- `CMD`: 실행된 명령
+
+PID 1의 `/sbin/init`은 실제로 `systemd`로 실행되며, 시스템 부팅 후 서비스와 다른 프로세스를 관리한다. 대괄호로 표시된 `[kthreadd]`, `[kworker]` 등은 커널 내부 작업을 처리하는 커널 스레드다.
+
+### CPU와 프로세스 상태 확인
+
+```bash
+top -b -n 1 | sed -n '1,15p'
+```
+
+확인한 주요 상태:
+
+```text
+load average: 0.02, 0.01, 0.00
+Tasks: 102 total, 1 running, 101 sleeping, 0 stopped, 0 zombie
+%Cpu(s): 0.0 us, 2.7 sy, 97.3 id, 0.0 wa
+```
+
+Load average는 최근 1분, 5분, 15분 동안의 평균 시스템 부하다. CPU가 2개인 현재 VM에서 측정값이 모두 0에 가까우므로 부하가 매우 낮다고 판단했다.
+
+전체 작업 102개 중 1개가 실행 중이고 101개가 대기 중이었다. 중지되었거나 zombie 상태인 작업은 없었다. CPU의 `id` 값이 97.3%이므로 대부분의 CPU 시간이 사용되지 않고 있었고, 입출력 대기를 의미하는 `wa`도 0%였다.
+
+### 메모리 상태 확인
+
+```bash
+free -h
+```
+
+실행 결과:
+
+```text
+              total        used        free      shared  buff/cache   available
+Mem:           1.9Gi       230Mi       1.1Gi       1.1Mi       639Mi       1.7Gi
+Swap:             0B          0B          0B
+```
+
+전체 메모리는 약 1.9GiB이고, 새 프로세스가 사용할 수 있는 `available` 메모리는 약 1.7GiB였다. Linux는 사용하지 않는 메모리를 캐시로 활용하므로 단순한 `free` 값보다 회수 가능한 캐시까지 고려한 `available` 값을 함께 확인해야 한다.
+
+현재 swap은 설정되어 있지 않다. 즉시 문제가 발생한 상태는 아니지만 물리 메모리가 부족해질 경우 swap 공간으로 대피할 수 없다는 의미다.
+
+### 디스크 상태 확인
+
+처음에는 다음 명령을 실행했다.
+
+```bash
+df -h/
+```
+
+오류 메시지:
+
+```text
+df: invalid option -- '/'
+Try 'df --help' for more information.
+```
+
+오류 메시지의 `invalid option`을 보고 명령의 옵션 부분을 확인했다. `-h` 옵션과 `/` 경로 사이에 공백이 없어서 `-h/` 전체가 하나의 옵션으로 해석된 것이 원인이었다.
+
+다음과 같이 공백을 추가하여 다시 실행했다.
+
+```bash
+df -h /
+```
+
+실행 결과:
+
+```text
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       8.7G  2.0G  6.7G  23% /
+```
+
+루트 파일시스템 `/`는 전체 8.7GiB 중 2.0GiB를 사용하고 있었으며 사용률은 23%였다. 남은 공간이 6.7GiB이므로 현재 디스크 공간은 충분하다고 판단했다.
+
+### 가동 시간과 부하 확인
+
+```bash
+uptime
+```
+
+실행 결과:
+
+```text
+16:42:49 up 1:31, 2 users, load average: 0.01, 0.01, 0.00
+```
+
+VM은 약 1시간 31분 동안 실행 중이었고 로그인 세션은 2개였다. `2 users`는 반드시 서로 다른 두 사람이 아니라 같은 사용자의 터미널 세션이 여러 개 연결된 상태일 수 있다.
+
+### 시스템 상태 판단
+
+- CPU 유휴 시간: 97.3%
+- 사용 가능한 메모리: 약 1.7GiB
+- 루트 디스크 사용률: 23%
+- Zombie 프로세스: 0개
+- Load average: 0에 가까움
+
+CPU, 메모리, 디스크와 프로세스 상태를 함께 확인한 결과 현재 Ubuntu VM은 자원 부족이나 비정상 프로세스 없이 정상적으로 실행 중이라고 판단했다.
+
+### 새로 이해한 점
+
+- 패키지는 설치된 프로그램 단위이고 프로세스는 현재 실행 중인 프로그램의 인스턴스다.
+- 각 프로세스에는 PID가 있으며 PPID를 통해 부모 프로세스와의 관계를 확인할 수 있다.
+- PID 1의 `systemd`는 시스템 서비스와 프로세스 관리의 시작점이다.
+- Linux 메모리는 `free` 값만 보지 않고 `available`과 캐시를 함께 확인해야 한다.
+- 디스크 상태에서는 전체 크기보다 `Use%`와 남은 공간을 함께 확인해야 한다.
+- 명령 오류가 발생하면 오류 메시지, 옵션, 인자와 공백을 순서대로 확인한다.
