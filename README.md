@@ -1,139 +1,180 @@
 # Cloud Engineering Lab
 
-클라우드 엔지니어 직무를 직접 체험하기 위해 진행하는 실습형 프로젝트입니다.
+AWS 기반 웹 서비스를 구축하고, 인프라 구성부터 배포 자동화, 모니터링, 장애 대응까지 단계적으로 구현하는 Cloud Engineering 프로젝트입니다.
 
-단순히 AWS 서비스를 한 번씩 사용해보는 것이 아니라, 실제 서비스를 **배포하고, 자동화하고, 모니터링하고, 장애를 진단하고 복구하는 과정**을 직접 경험하는 것을 목표로 합니다.
-
-이 프로젝트는 **Cloud Resume Challenge**를 참고하되, 단순 포트폴리오 웹사이트 구축보다 **Cloud / Infrastructure / DevOps / SRE 기초 실무 경험**에 더 초점을 맞춰 확장합니다.
+본 프로젝트는 Cloud Resume Challenge의 구조를 참고하되, 단순 정적 웹사이트 배포를 넘어 **Infrastructure as Code, CI/CD, Observability, Incident Response**까지 확장하여 실제 Cloud / DevOps 환경에서 요구되는 운영 경험을 구현하는 것을 목표로 합니다.
 
 ---
 
-## 프로젝트 목표
+## Overview
 
-이 프로젝트의 목적은 복잡한 애플리케이션을 만드는 것이 아닙니다.
+### Project Objective
 
-하나의 서비스가 실제로 어떻게:
+클라우드 환경에서 서비스가 배포되고 운영되는 전체 흐름을 직접 구현합니다.
 
-- 서버에 올라가는지
-- 사용자 요청을 받는지
-- 클라우드에 배포되는지
-- 반복 작업을 자동화하는지
-- 상태를 모니터링하는지
-- 장애가 발생했을 때 어떻게 원인을 찾는지
-- 어떻게 복구하는지
-- 문제 해결 과정을 어떻게 문서화하는지
+주요 목표는 다음과 같습니다.
 
-를 직접 경험하는 것이 핵심입니다.
-
-로컬 Linux 환경에서 시작해 AWS 기반 클라우드 환경까지 단계적으로 확장합니다.
+- AWS 기반 서비스 아키텍처 설계 및 구축
+- Linux 기반 서버 운영 및 트러블슈팅
+- AWS 리소스 구성 및 권한 관리
+- Terraform 기반 Infrastructure as Code 구현
+- GitHub Actions 기반 CI/CD 자동화
+- CloudWatch 기반 로그 및 메트릭 모니터링
+- 장애 상황 재현 및 Incident Response 수행
+- 운영 과정과 기술적 의사결정 문서화
 
 ---
 
-## 학습 범위
+## Architecture
 
-프로젝트를 진행하며 다음 영역을 학습합니다.
-
-- Linux 서버 운영
-- 네트워크 및 HTTP 기초
-- Nginx
-- AWS
-- S3
-- CloudFront
-- IAM
-- API Gateway
-- Lambda
-- DynamoDB
-- Infrastructure as Code
-- Terraform
-- CI/CD
-- GitHub Actions
-- 모니터링 및 로깅
-- CloudWatch
-- 장애 대응
-- 트러블슈팅
-- Runbook 및 Incident Report 작성
-
----
-
-## 목표 아키텍처
-
-프로젝트는 최종적으로 아래와 같은 구조까지 확장하는 것을 목표로 합니다.
+최종적으로 아래와 같은 Serverless 기반 AWS 아키텍처를 구성합니다.
 
 ```text
-                        Internet
-                           │
-                           ▼
-                      CloudFront
-                           │
-                ┌──────────┴──────────┐
-                │                     │
-                ▼                     ▼
-               S3                API Gateway
-                │                     │
-                │                     ▼
-        Portfolio Website          Lambda
-                                      │
-                                      ▼
-                                  DynamoDB
+                         Internet
+                            │
+                            ▼
+                       CloudFront
+                            │
+                ┌───────────┴───────────┐
+                │                       │
+                ▼                       ▼
+               S3                  API Gateway
+                │                       │
+                │                       ▼
+        Static Web Application        Lambda
+                                        │
+                                        ▼
+                                    DynamoDB
 
 
-GitHub
-   │
-   ▼
-GitHub Actions
-   │
-   ├── Test
-   └── Deploy
+                ┌─────────────────────────────┐
+                │                             │
+                ▼                             ▼
+           GitHub Actions                 Terraform
+                │                             │
+                ▼                             ▼
+        CI/CD Automation             AWS Infrastructure
 
 
-Terraform
-   │
-   └── AWS Infrastructure
-
-
-CloudWatch
-   │
-   ├── Logs
-   ├── Metrics
-   └── Alerts
+                            │
+                            ▼
+                        CloudWatch
+                     Logs / Metrics / Alarms
 ```
 
-위 구조를 처음부터 한 번에 구현하지 않고, 각 단계를 직접 이해하면서 점진적으로 확장합니다.
-
 ---
 
-## 프로젝트 로드맵
+## Architecture Evolution
 
-### Phase 0 — Linux 및 인프라 기초
-
-클라우드로 넘어가기 전에 로컬 서버 환경에서 기본적인 서버 운영을 경험합니다.
-
-주요 학습 내용:
-
-- Ubuntu
-- Linux Process
-- systemd
-- Port
-- HTTP
-- Nginx
-- Log
-- 기본적인 장애 진단
-
-실습할 장애 예시:
-
-- Nginx 서비스 중지
-- Port Listener 없음
-- Nginx 설정 오류
-- HTTP 연결 실패
-
----
-
-### Phase 1 — AWS 정적 웹사이트 배포
-
-AWS를 사용해 간단한 포트폴리오 웹사이트를 배포합니다.
+프로젝트는 한 번에 모든 인프라를 구축하지 않고, 아래 단계로 점진적으로 확장합니다.
 
 ```text
-Browser
+Local Linux
+     │
+     ▼
+Nginx Web Server
+     │
+     ▼
+AWS S3
+     │
+     ▼
+CloudFront
+     │
+     ▼
+API Gateway
+     │
+     ▼
+Lambda
+     │
+     ▼
+DynamoDB
+     │
+     ▼
+Terraform
+     │
+     ▼
+GitHub Actions
+     │
+     ▼
+CloudWatch
+```
+
+각 단계에서 정상 동작뿐 아니라 장애 상황을 재현하고, 원인 분석 및 복구 과정을 문서화합니다.
+
+---
+
+## Tech Stack
+
+### Cloud
+
+- AWS
+- Amazon S3
+- Amazon CloudFront
+- Amazon API Gateway
+- AWS Lambda
+- Amazon DynamoDB
+- Amazon CloudWatch
+- AWS IAM
+
+### Infrastructure
+
+- Linux
+- Ubuntu
+- Nginx
+- Terraform
+
+### CI/CD
+
+- GitHub Actions
+- GitHub
+
+### Backend
+
+- Python
+- AWS Lambda
+
+### Monitoring
+
+- CloudWatch Logs
+- CloudWatch Metrics
+- CloudWatch Alarms
+
+---
+
+## Key Implementations
+
+### 1. Linux Web Server Operation
+
+Ubuntu 환경에서 Nginx 기반 웹 서버를 구성하고 서비스 상태와 네트워크 연결을 직접 확인합니다.
+
+주요 작업:
+
+- Nginx 설치 및 서비스 관리
+- HTTP 요청 처리 확인
+- Listening Port 확인
+- Process / Service 상태 점검
+- 로그 기반 장애 원인 분석
+
+사용한 주요 도구:
+
+```bash
+systemctl
+ss
+curl
+journalctl
+tail
+```
+
+---
+
+### 2. Static Web Hosting on AWS
+
+정적 웹 페이지를 Amazon S3에 배포하고 CloudFront를 통해 외부에 제공합니다.
+
+구성:
+
+```text
+Client
    │
    ▼
 CloudFront
@@ -142,24 +183,21 @@ CloudFront
 S3
 ```
 
-주요 학습 내용:
+주요 고려사항:
 
-- S3
-- CloudFront
-- Static Website Hosting
-- CDN
-- Cache
-- HTTPS
-- Origin
+- S3 직접 공개 최소화
+- CloudFront를 통한 콘텐츠 전달
+- HTTPS 적용
+- Cache 활용
 
 ---
 
-### Phase 2 — Serverless Backend 구축
+### 3. Serverless API
 
-간단한 Backend API를 추가합니다.
+API Gateway와 Lambda를 사용해 간단한 Serverless Backend를 구성합니다.
 
 ```text
-Browser
+Client
    │
    ▼
 API Gateway
@@ -171,52 +209,43 @@ Lambda
 DynamoDB
 ```
 
-초기 기능 예시:
+예시 기능:
 
-```text
+```http
 GET /visitors
 ```
 
-웹사이트 방문자 수를 조회하거나 증가시키는 간단한 API를 구현합니다.
-
-주요 학습 내용:
-
-- API Gateway
-- AWS Lambda
-- Python
-- DynamoDB
-- IAM Permission
+웹사이트 방문 횟수를 DynamoDB에 저장하고 조회합니다.
 
 ---
 
-### Phase 3 — Infrastructure as Code
+### 4. Infrastructure as Code
 
-AWS Console에서 생성했던 리소스를 Terraform으로 관리합니다.
+AWS Console에서 직접 생성한 인프라를 Terraform 코드로 전환합니다.
 
-```text
-Terraform
-   │
-   ▼
-AWS Infrastructure
+관리 대상:
+
+- S3
+- CloudFront
+- API Gateway
+- Lambda
+- DynamoDB
+- IAM
+
+Terraform을 통해 동일한 인프라를 재현할 수 있도록 구성합니다.
+
+```bash
+terraform init
+terraform validate
+terraform plan
+terraform apply
 ```
 
-주요 학습 내용:
-
-- Terraform
-- Provider
-- Resource
-- Variable
-- Output
-- State
-- Infrastructure Lifecycle
-
-직접 만든 인프라를 코드로 재현할 수 있는 상태를 목표로 합니다.
-
 ---
 
-### Phase 4 — CI/CD
+### 5. CI/CD Automation
 
-GitHub Actions를 사용해 테스트와 배포를 자동화합니다.
+GitHub Actions를 사용하여 코드 변경 이후 테스트와 배포를 자동화합니다.
 
 ```text
 git push
@@ -225,91 +254,163 @@ git push
 GitHub Actions
    │
    ├── Test
-   ├── Validate
+   ├── Terraform Validate
    ├── Deploy
    └── Smoke Test
 ```
 
-주요 학습 내용:
-
-- CI/CD
-- GitHub Actions
-- 자동 배포
-- 배포 검증
-- 실패 시 Pipeline 중단
+목표는 수동 배포 과정에서 발생할 수 있는 반복 작업과 실수를 줄이는 것입니다.
 
 ---
 
-### Phase 5 — Monitoring & Observability
+### 6. Monitoring & Observability
 
-서비스와 인프라의 상태를 관찰할 수 있도록 모니터링을 추가합니다.
+CloudWatch를 사용하여 서비스 상태를 관찰합니다.
 
-초기 모니터링 항목:
+주요 모니터링 대상:
 
-- Request Count
-- Error Count
+- API Request
 - Lambda Error
 - Lambda Duration
-- API Error
+- Application Logs
 - Deployment Failure
 
-사용 도구:
-
-- Amazon CloudWatch
-- CloudWatch Logs
-- CloudWatch Metrics
-- CloudWatch Alarms
+향후 CloudWatch Alarm을 통해 주요 장애를 자동 탐지하도록 확장합니다.
 
 ---
 
-### Phase 6 — Incident Response
+## Incident Response
 
-일부러 장애를 발생시키고 직접 원인을 분석합니다.
+프로젝트에서는 정상적인 인프라 구축뿐 아니라 실제 운영 환경에서 발생할 수 있는 장애를 의도적으로 재현합니다.
 
-예상 Incident:
+각 장애는 아래 형식으로 기록합니다.
 
 ```text
-INC-001 Nginx Service Down
-INC-002 CloudFront Access Denied
-INC-003 Lambda Permission Error
-INC-004 API Gateway 5xx Error
-INC-005 Terraform Deployment Failure
-INC-006 GitHub Actions Deployment Failure
+Symptom
+   ↓
+Detection
+   ↓
+Investigation
+   ↓
+Root Cause
+   ↓
+Resolution
+   ↓
+Verification
+   ↓
+Prevention
 ```
 
-각 Incident는 다음 형식으로 기록합니다.
+예정된 Incident Scenario:
 
-- 증상
-- 탐지 방법
-- 조사 과정
-- Root Cause
-- 해결 방법
-- 복구 확인
-- 재발 방지 / 개선 방법
+| ID      | Incident                          | 주요 확인 영역         |
+| ------- | --------------------------------- | ---------------------- |
+| INC-001 | Nginx Service Down                | Linux / Process / Port |
+| INC-002 | CloudFront Access Denied          | S3 / CloudFront / IAM  |
+| INC-003 | Lambda Permission Error           | IAM                    |
+| INC-004 | API Gateway 5xx                   | API Gateway / Lambda   |
+| INC-005 | Terraform Deployment Failure      | IaC                    |
+| INC-006 | GitHub Actions Deployment Failure | CI/CD                  |
+
+실제 장애 분석 기록은 [`docs/incidents`](./docs/incidents)에서 관리합니다.
 
 ---
 
-## Repository 구조
+## Troubleshooting Strategy
 
-프로젝트는 아래와 같은 구조로 관리합니다.
+장애 발생 시 아래 순서로 문제를 분석합니다.
+
+```text
+1. 증상 확인
+      │
+      ▼
+2. Service / Process 확인
+      │
+      ▼
+3. Network / Port 확인
+      │
+      ▼
+4. Logs / Metrics 확인
+      │
+      ▼
+5. 가설 수립
+      │
+      ▼
+6. Root Cause 확인
+      │
+      ▼
+7. 수정 및 복구
+      │
+      ▼
+8. 정상 동작 검증
+      │
+      ▼
+9. 재발 방지
+```
+
+단순히 문제를 해결하는 것보다 **어떤 정보와 근거를 통해 원인을 좁혀갔는지**를 기록하는 것을 중요하게 다룹니다.
+
+---
+
+## Documentation
+
+프로젝트 진행 과정은 다음 구조로 관리합니다.
+
+```text
+docs/
+├── architecture/
+│   └── 아키텍처 및 설계 변경 기록
+│
+├── incidents/
+│   └── 장애 분석 및 복구 기록
+│
+├── runbooks/
+│   └── 반복 가능한 운영 절차
+│
+└── worklogs/
+    └── 구현 및 실습 기록
+```
+
+### Incident Report
+
+각 장애는 다음 내용을 기록합니다.
+
+- Symptom
+- Detection
+- Investigation
+- Root Cause
+- Resolution
+- Verification
+- Prevention
+
+### Runbook
+
+반복적으로 수행되는 운영 절차를 문서화합니다.
+
+예:
+
+- Deployment
+- Service Recovery
+- Incident Response
+
+---
+
+## Repository Structure
 
 ```text
 cloud-engineering-lab/
-│
-├── docs/
-│   ├── architecture/
-│   │
-│   ├── incidents/
-│   │
-│   ├── runbooks/
-│   │
-│   └── worklogs/
 │
 ├── frontend/
 │
 ├── backend/
 │
 ├── terraform/
+│
+├── docs/
+│   ├── architecture/
+│   ├── incidents/
+│   ├── runbooks/
+│   └── worklogs/
 │
 ├── .github/
 │   └── workflows/
@@ -318,211 +419,52 @@ cloud-engineering-lab/
 └── .gitignore
 ```
 
-프로젝트를 진행하면서 필요한 디렉터리를 단계적으로 추가합니다.
-
 ---
 
-## 기록 방식
+## Current Status
 
-이 프로젝트에서는 최종 결과물뿐 아니라 **문제를 해결해 나가는 과정 자체를 중요하게 기록합니다.**
+### Phase 0 — Linux & Infrastructure
 
-### Worklog
+현재 Linux 기반 로컬 인프라 환경부터 단계적으로 구축하고 있습니다.
 
-매일 진행한 작업과 학습 내용을 아래 디렉터리에 기록합니다.
-
-```text
-docs/worklogs/
-```
-
-예시:
-
-```text
-day01-linux-nginx.md
-day02-aws-s3.md
-day03-cloudfront.md
-```
-
-각 Worklog에는 다음 내용을 기록합니다.
-
-- 오늘의 목표
-- 구현한 내용
-- 사용한 명령어 및 설정
-- 발생한 문제
-- 문제를 확인한 과정
-- 해결 방법
-- 배운 점
-- 다음 작업
-
----
-
-## Incident Report
-
-장애와 트러블슈팅 과정은 아래 디렉터리에 기록합니다.
-
-```text
-docs/incidents/
-```
-
-기본 형식:
-
-```markdown
-# INC-001: Nginx Service Down
-
-## 증상
-
-## 탐지
-
-## 조사 과정
-
-## Root Cause
-
-## 해결
-
-## 복구 확인
-
-## 재발 방지 / 개선
-```
-
-단순히 오류 메시지만 기록하지 않고, **어떤 순서로 문제를 확인했고 어떤 근거로 원인을 판단했는지**를 남기는 것을 목표로 합니다.
-
----
-
-## Architecture 기록
-
-아키텍처 변화와 주요 설계 결정은 아래 디렉터리에 기록합니다.
-
-```text
-docs/architecture/
-```
-
-프로젝트가 발전하면서 아키텍처 다이어그램도 함께 업데이트합니다.
-
-예:
-
-```text
-v1-local-nginx.md
-v2-s3-cloudfront.md
-v3-serverless-backend.md
-```
-
----
-
-## Runbook
-
-반복적으로 수행할 수 있는 운영 절차는 아래 디렉터리에 기록합니다.
-
-```text
-docs/runbooks/
-```
-
-예:
-
-```text
-service-recovery.md
-deployment.md
-incident-response.md
-```
-
-누군가 같은 장애를 다시 만났을 때 문서만 보고 대응할 수 있는 수준으로 작성하는 것을 목표로 합니다.
-
----
-
-## 현재 진행 상황
-
-### Day 01 — Linux & Nginx
-
-- [ ] Ubuntu 서버 환경 구성
-- [ ] Linux 기본 명령어 확인
-- [ ] Nginx 설치
-- [ ] 정적 페이지 배포
-- [ ] HTTP 연결 확인
-- [ ] Listening Port 확인
-- [ ] Nginx 서비스 의도적으로 중지
-- [ ] Service / Port / Log 기반으로 장애 진단
-- [ ] 서비스 복구
+- [ ] Ubuntu 환경 구성
+- [ ] Nginx 웹 서버 구축
+- [ ] HTTP 통신 확인
+- [ ] Process / Port / Log 확인
+- [ ] Nginx 장애 재현
 - [ ] Incident Report 작성
-- [ ] Worklog 작성
+
+### Next
+
+- [ ] S3 Static Website Hosting
+- [ ] CloudFront 구성
+- [ ] Serverless API 구축
+- [ ] Terraform IaC 전환
+- [ ] GitHub Actions CI/CD 구축
+- [ ] CloudWatch Monitoring 구성
 
 ---
 
-## Troubleshooting 기본 흐름
+## What This Project Demonstrates
 
-프로젝트 전반에서 아래 순서로 장애를 확인하는 습관을 익히는 것을 목표로 합니다.
+본 프로젝트를 통해 다음 역량을 실제 구현 결과와 문서로 증명하는 것을 목표로 합니다.
 
-```text
-Incident 발생
-   │
-   ▼
-증상 확인
-   │
-   ▼
-Service / Process 확인
-   │
-   ▼
-Network / Port 확인
-   │
-   ▼
-Logs / Metrics 확인
-   │
-   ▼
-가설 수립
-   │
-   ▼
-Root Cause 확인
-   │
-   ▼
-수정
-   │
-   ▼
-복구 검증
-   │
-   ▼
-재발 방지 문서화
-```
+- Linux 기반 서비스 운영
+- 기본적인 HTTP / Network 트러블슈팅
+- AWS 서비스 구성 및 연동
+- IAM 기반 권한 관리
+- Infrastructure as Code
+- CI/CD Pipeline 구축
+- Cloud Monitoring
+- 장애 분석 및 복구
+- 기술적 의사결정 및 운영 문서 작성
 
 ---
 
-## AI 사용 원칙
+## Reference
 
-AI는 프로젝트를 대신 구현하는 용도가 아니라 학습과 문제 해결을 보조하는 도구로 사용합니다.
+본 프로젝트는 다음 프로젝트에서 아이디어를 참고했습니다.
 
-AI를 활용하는 영역:
+- Cloud Resume Challenge
 
-- 개념 설명
-- 디버깅 힌트
-- 작성한 설정 리뷰
-- 코드 리뷰
-- 아키텍처 리뷰
-- 놓친 Edge Case 확인
-- 면접 질문 및 복습
-
-가능하면 AI에게 맡기지 않는 영역:
-
-- Terraform 전체 코드 자동 생성
-- CI/CD Workflow 전체 생성
-- Nginx 설정 전체 생성
-- 발생한 장애의 즉시 해결
-- README 및 Incident Report 전체 자동 작성
-
-핵심 인프라 설정은 먼저 직접 작성하고 이해한 뒤 AI에게 리뷰를 요청하는 방식으로 진행합니다.
-
----
-
-## 이 프로젝트를 통해 확인하고 싶은 것
-
-프로젝트가 끝났을 때 다음 질문에 직접 답할 수 있는 상태를 목표로 합니다.
-
-- 사용자의 HTTP 요청은 어떤 과정을 거쳐 서비스에 도달하는가?
-- Linux에서 Process와 Service는 어떻게 관리되는가?
-- Port는 어떤 역할을 하는가?
-- Nginx는 어떤 역할을 하는가?
-- AWS의 각 리소스는 어떻게 연결되는가?
-- IAM Permission이 잘못되면 어떤 문제가 발생하는가?
-- 왜 Infrastructure as Code를 사용하는가?
-- CI/CD는 어떤 반복 작업을 줄여주는가?
-- 서비스 장애를 어떻게 감지할 수 있는가?
-- 로그와 Metric을 이용해 어떻게 장애 원인을 찾는가?
-- 장애가 발생했을 때 어떤 순서로 대응해야 하는가?
-- 같은 장애가 다시 발생하지 않도록 어떻게 개선할 수 있는가?
-
-최종적으로 이 프로젝트를 통해 **Cloud / Infrastructure / DevOps 직무가 나에게 맞는지 직접 경험하고 판단하는 것**을 목표로 합니다.
+원본 프로젝트를 그대로 구현하는 것이 아니라, Cloud / Infrastructure / DevOps 직무 경험에 맞도록 운영, 자동화, 모니터링, 장애 대응 영역을 추가하여 진행합니다.
