@@ -75,19 +75,19 @@ Local Linux
 Nginx Web Server
      │
      ▼
-AWS S3
+Network / HTTP
      │
      ▼
-CloudFront
+AWS IAM / VPC / EC2
      │
      ▼
-API Gateway
+S3 / CloudFront / DNS
      │
      ▼
-Lambda
+API Gateway / Lambda / DynamoDB
      │
      ▼
-DynamoDB
+Docker / Compose
      │
      ▼
 Terraform
@@ -96,7 +96,7 @@ Terraform
 GitHub Actions
      │
      ▼
-CloudWatch
+CloudWatch / Incident Response
 ```
 
 각 단계에서 정상 동작뿐 아니라 장애 상황을 재현하고, 원인 분석 및 복구 과정을 문서화합니다.
@@ -121,6 +121,9 @@ CloudWatch
 - Linux
 - Ubuntu
 - Nginx
+- Amazon VPC
+- Amazon EC2
+- Docker
 - Terraform
 
 ### CI/CD
@@ -423,25 +426,23 @@ cloud-engineering-lab/
 
 ## Current Status
 
-### Phase 0 — Linux & Infrastructure
+전체 과정은 부트캠프 공통 역량을 반영한 11개 Phase, 66개 Task로 관리합니다.
+
+- [상세 학습 로드맵](./docs/roadmap/cloud-engineering-roadmap.md)
+- 개인 진행도 대시보드: `frontend/`
+
+### Phase 01 — Linux · OS Foundations
 
 현재 Linux 기반 로컬 인프라 환경부터 단계적으로 구축하고 있습니다.
 
-- [ ] Ubuntu 환경 구성
-- [ ] Nginx 웹 서버 구축
-- [ ] HTTP 통신 확인
-- [ ] Process / Port / Log 확인
-- [ ] Nginx 장애 재현
-- [ ] Incident Report 작성
+- [x] Ubuntu VM과 시스템 기준선 확인
+- [ ] 파일시스템과 권한 실습
+- [ ] 패키지·프로세스·자원 관찰
+- [ ] systemd 서비스 수명주기 확인
+- [ ] Nginx 정적 페이지와 HTTP 검증
+- [ ] Nginx 중지 장애 진단과 복구
 
-### Next
-
-- [ ] S3 Static Website Hosting
-- [ ] CloudFront 구성
-- [ ] Serverless API 구축
-- [ ] Terraform IaC 전환
-- [ ] GitHub Actions CI/CD 구축
-- [ ] CloudWatch Monitoring 구성
+다음 Task는 **파일시스템과 권한 실습**이며, 완료 전에는 이후 Task로 진행하지 않습니다.
 
 ---
 
