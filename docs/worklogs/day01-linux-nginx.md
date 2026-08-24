@@ -393,3 +393,77 @@ CPU, 메모리, 디스크와 프로세스 상태를 함께 확인한 결과 현�
 - Linux 메모리는 `free` 값만 보지 않고 `available`과 캐시를 함께 확인해야 한다.
 - 디스크 상태에서는 전체 크기보다 `Use%`와 남은 공간을 함께 확인해야 한다.
 - 명령 오류가 발생하면 오류 메시지, 옵션, 인자와 공백을 순서대로 확인한다.
+
+## systemd 서비스 수명주기 확인
+
+systemd가 관리하는 서비스와 실제로 실행되는 프로세스의 관계를 이해하기 위해 Ubuntu의 `cron.service`를 관찰했다.
+
+### cron 서비스 초기 상태 확인
+
+다음 명령으로 서비스의 상세 상태, 현재 실행 여부, 부팅 시 자동 시작 여부와 systemd 속성을 확인했다.
+
+```bash
+systemctl status cron --no-pager
+systemctl is-active cron
+systemctl is-enabled cron
+systemctl show cron -p MainPID -p ActiveState -p SubState -p UnitFileState
+```
+
+주요 출력:
+
+```text
+● cron.service - Regular background program processing daemon
+     Loaded: loaded (/usr/lib/systemd/system/cron.service; enabled; preset: enabled)
+     Active: active (running) since Mon 2026-08-24 15:11:42 KST; 1h 42min ago
+   Main PID: 762 (cron)
+      Tasks: 1 (limit: 2259)
+     Memory: 468.0K (peak: 1.7M)
+        CPU: 374ms
+     CGroup: /system.slice/cron.service
+             └─762 /usr/sbin/cron -f -P
+
+active
+enabled
+MainPID=762
+ActiveState=active
+SubState=running
+UnitFileState=enabled
+```
+
+### 상태 해석
+
+- `Loaded: loaded`: `/usr/lib/systemd/system/cron.service` unit 파일을 systemd가 정상적으로 읽었다.
+- `enabled`: VM이 부팅될 때 cron 서비스를 자동으로 시작하도록 설정되어 있다.
+- `preset: enabled`: Ubuntu가 제공하는 기본 권장 설정도 자동 시작이다.
+- `Active: active (running)`: cron 서비스가 현재 실행 중이다.
+- `Main PID: 762`: systemd가 cron 서비스의 대표 프로세스로 PID 762를 추적하고 있다.
+- `Tasks: 1`: cron 서비스의 cgroup 안에 현재 작업 하나가 존재한다.
+- `Memory: 468.0K`: 확인 당시 서비스가 사용하던 메모리다.
+- `CPU: 374ms`: 서비스가 시작된 이후 사용한 누적 CPU 시간이다.
+- `CGroup: /system.slice/cron.service`: systemd가 해당 cgroup을 통해 cron 프로세스와 자원을 묶어서 관리한다.
+
+`systemctl is-active`의 `active`는 지금 서비스가 실행 중이라는 의미이고, `systemctl is-enabled`의 `enabled`는 다음 부팅 때 자동으로 시작되도록 설정되어 있다는 의미다. 현재 실행 상태와 부팅 시 자동 시작 설정은 서로 다른 상태라는 것을 확인했다.
+
+### cron 실행 로그 확인
+
+`systemctl status` 아래에 표시된 최근 로그에서는 cron이 root 사용자의 예약 작업을 실행한 기록을 확인했다.
+
+```text
+Aug 24 16:45:01 day1-ubuntu CRON[1798]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+Aug 24 16:45:01 day1-ubuntu CRON[1799]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Aug 24 16:45:01 day1-ubuntu CRON[1798]: pam_unix(cron:session): session closed for user root
+```
+
+로그는 다음 순서로 해석했다.
+
+1. cron이 root 사용자로 작업을 실행하기 위한 PAM 세션을 열었다.
+2. `debian-sa1` 명령을 실행해 시스템 활동 통계를 수집했다.
+3. 명령 실행이 끝난 후 사용자 세션을 닫았다.
+
+15:11에 시작된 cron 서비스의 대표 프로세스 PID는 762로 유지되고 있지만, 예약 작업을 실행할 때는 1798과 1799처럼 별도의 프로세스가 생성되었다. 이를 통해 하나의 systemd 서비스가 대표 프로세스를 관리하면서 필요할 때 자식 작업 프로세스를 실행할 수 있다는 것을 확인했다.
+
+### 현재 판단
+
+cron unit 파일은 정상적으로 로드되었고 서비스는 실행 중이며 부팅 시 자동 시작도 활성화되어 있다. 최근 로그에서도 예약 작업이 열리고 실행된 후 정상적으로 닫힌 흐름이 확인되므로 현재 cron 서비스에 장애 징후는 없다.
+
+다음에는 cron 서비스를 직접 중지한 뒤 `inactive` 상태, 프로세스와 로그 변화를 확인하고 다시 시작하여 복구할 예정이다.
