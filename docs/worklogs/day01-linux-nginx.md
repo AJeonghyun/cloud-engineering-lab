@@ -36,8 +36,17 @@ Ubuntu 배포판의 이름과 버전을 확인했다.
 주요 출력값:
 
 ```text
-PRETTY_NAME="[실제 출력값]"
-VERSION_ID="[실제 출력값]"
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.4 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy
 ```
 
 `cat`은 파일 내용을 출력하는 명령이고, `/etc/os-release`는 현재 설치된 Linux 배포판의 정보를 담고 있는 파일이다.
@@ -46,8 +55,8 @@ VERSION_ID="[실제 출력값]"
 
 현재 실행 중인 Linux 커널 버전과 CPU 아키텍처를 확인했다.
 
-- Kernel version: `[실제 커널 버전]`
-- CPU architecture: `[실제 아키텍처]`
+- Kernel version: `6.8.0-137-generic`
+- CPU architecture: `aarch64`
 
 `/etc/os-release`는 Ubuntu 배포판 정보를 보여주고, `uname`은 현재 실행 중인 Linux 커널 정보를 보여준다는 차이를 알게 되었다.
 
@@ -77,8 +86,8 @@ VM의 네트워크 인터페이스와 IP 주소를 확인했다.
 
 - Loopback interface: `lo`
 - Loopback address: `127.0.0.1`
-- Network interface: `[실제 인터페이스 이름]`
-- VM IPv4 address: `[실제 IPv4 주소]`
+- Network interface: `enp0s1`
+- VM IPv4 address: `192.168.252.3/24`
 
 `127.0.0.1`은 명령을 실행하는 시스템 자신을 의미한다.
 
