@@ -21,11 +21,22 @@
 *.pfx
 credentials
 credentials.json
+.aws/
+.npmrc
+.pypirc
+id_rsa
+id_ed25519
+kubeconfig
+*.kubeconfig
 
 # Terraform local state and generated files
 **/.terraform/*
 *.tfstate
 *.tfstate.*
+*.tfvars
+*.tfvars.json
+!*.example.tfvars
+!*.example.tfvars.json
 *.tfplan
 crash.log
 crash.*.log
